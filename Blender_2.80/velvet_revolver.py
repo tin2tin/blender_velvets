@@ -298,7 +298,7 @@ class VideoSource(object):
             elif v_format == "is_mjpeg":
                 self.v_output = self.input[:-4] + "_MJPEG.mov"
                 self.format = "-probesize 5000000 -c:v mjpeg -qscale:v 1 \
-                               -acodec pcm_s16be -threads 0"
+                               -acodec pcm_s16be"
             else: # v_format == "is_h264":
                 self.v_output = self.input[:-4] + "_h264.mkv"
                 self.format = "-probesize 5000000 -c:v libx264 -pix_fmt yuv420p \
@@ -566,15 +566,15 @@ def menuEntry(self, context):
     self.layout.operator(VelvetRevolver.bl_idname, text="Velvet Revolver")
 
 
-class SEQUENCER_OT_proxy_select(bpy.types.Operator):
-    """Select Preview File"""
+class SEQUENCER_OT_proxy_swap(bpy.types.Operator):
+    """Swap to and from Proxy Files"""
     bl_idname = "sequencer.revolver"
-    bl_label = "Swap Files"
+    bl_label = "Proxy Swap"
     bl_options = {"REGISTER", "UNDO"}
 
-    type: EnumProperty(
-        name="Preview Files",
-        description="Preview Files",
+    type: bpy.props.EnumProperty(
+        name="Proxy Swap",
+        description="Proxy Swap",
         options={'ENUM_FLAG'},
         items=(
              ('INTERMEDIATES', "Intermediates", "Swap to intermediate files"),
@@ -596,13 +596,21 @@ class SEQUENCER_OT_proxy_select(bpy.types.Operator):
             bpy.ops.sequencer.proxy_editing_toproxy()
         else:
             bpy.ops.sequencer.proxy_editing_tofullres()
+
+        context = bpy.context
+        for area in bpy.context.screen.areas:
+            if area.type == 'SEQUENCE_EDITOR':
+                if area.spaces[0].view_type in {'PREVIEW', 'SEQUENCER_PREVIEW'}:
+                    bpy.ops.sequencer.view_all_preview()
         return {'FINISHED'}
 
 
 def headerEntry(self, context):
     layout = self.layout
-    layout.separator_spacer()
-    layout.operator_menu_enum("sequencer.revolver", "type")
+    st = context.space_data
+    if st.view_type in {'PREVIEW', 'SEQUENCER_PREVIEW'}:
+        #layout.separator_spacer()
+        layout.operator_menu_enum("sequencer.revolver", "type")
 
 
 classes = (
@@ -611,7 +619,7 @@ classes = (
 #    VideoSource,
     VelvetRevolver,
     Velvet_Revolver_Transcoder,
-    SEQUENCER_OT_proxy_select,
+    SEQUENCER_OT_proxy_swap,
 )
 
 # store keymaps here to access after registration
