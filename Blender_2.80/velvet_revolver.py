@@ -20,13 +20,13 @@
 
 bl_info = {
     "name": "velvet_revolver ::",
-    "description": "Mass-create proxies and/or transcode to equalize FPSs",
+    "description": "Mass-encode proxies and/or transcode to equalize FPSs",
     "author": "szaszak - http://blendervelvets.org",
-    "version": (2, 0, 20191007),
+    "version": (2, 0, 20191009),
     "blender": (2, 80, 0),
     "warning": "Bang! Bang! That awful sound.",
     "category": ":",
-    "location": "File > External Data > Velvet Revolver",
+    "location": "File > External Data > Velvet Revolver & Sequencer Preview Header",
     "support": "COMMUNITY"}
 
 import bpy
@@ -248,7 +248,7 @@ class Proxy_Editing_ToFullRes(bpy.types.Operator):
 ######## ----------------------------------------------------------------------
 
 class VideoSource(object):
-    """Uses video source to run FFMPEG and create proxies or full-res copies"""
+    """Uses video source to run FFMPEG and encode proxies or full-res copies"""
     def __init__(self, ffCommand, filepath, v_source, v_res, v_res_w, v_res_h, v_format,
                  fps, deinter, ar, ac, ow):
         self.ffCommand = ffCommand
@@ -286,7 +286,7 @@ class VideoSource(object):
                                -qscale:v 5 -pix_fmt yuvj422p -acodec pcm_s16be"
             else: # v_format == "is_h264":
                 self.format = "-probesize 5000000 -c:v libx264 -pix_fmt yuv420p \
-                               -preset ultrafast -tune fastdecode -c:a copy"
+                               -g 1 -sn -crf 25 -preset ultrafast -tune fastdecode -c:a copy"
                 # -preset ultrafast was having problems
                 # dealing with ProRes422 from Final Cut
         else: # v_res == "fullres"
@@ -302,7 +302,7 @@ class VideoSource(object):
             else: # v_format == "is_h264":
                 self.v_output = self.input[:-4] + "_h264.mkv"
                 self.format = "-probesize 5000000 -c:v libx264 -pix_fmt yuv420p \
-                               -preset ultrafast -tune fastdecode -c:a copy"
+                               -g 1 -sn -crf 25 -preset ultrafast -tune fastdecode -c:a copy"
                 # -preset ultrafast was having problems
                 # dealing with ProRes422 from Final Cut
 
@@ -327,7 +327,7 @@ class VideoSource(object):
 ######## ----------------------------------------------------------------------
 
 class VelvetRevolver(bpy.types.Operator, ExportHelper):
-    """Mass create proxies and/or intra-frame copies from original files"""
+    """Mass encode proxies and/or intra-frame copies from original files"""
     bl_idname = "export.revolver"
     bl_label = "Export to Revolver"
     filename_ext = ".revolver"
@@ -335,12 +335,12 @@ class VelvetRevolver(bpy.types.Operator, ExportHelper):
     transcode_items = (
         ('is_mjpeg', 'MJPEG', ''),
         ('is_prores', 'ProRes422', ''),
-        ('is_h264', 'h264 (experimental)', '')
+        ('is_h264', 'h.264', '')
     )
 
     proxies: BoolProperty(
-        name="Create Proxies",
-        description="Create proxies with same FPS as current scene",
+        name="Encode Proxies",
+        description="Encode proxies with same FPS as current scene",
         default=True,
     )
     prop_proxy_w: IntProperty(
@@ -354,8 +354,8 @@ class VelvetRevolver(bpy.types.Operator, ExportHelper):
         default=360
     )
     copies: BoolProperty(
-        name="Create Full-res Copies",
-        description="Create full-res copies with same FPS as current scene (slow)",
+        name="Encode Full-res Copies",
+        description="Encode full-res copies with same FPS as current scene (slow)",
         default=False,
     )
     prop_fullres_w: IntProperty(
@@ -476,11 +476,11 @@ class VelvetRevolver(bpy.types.Operator, ExportHelper):
             print("No action selected for Velvet Revolver. Aborting.")
 
         else:
-            # Create a percentage to base a (mouse) progress counter
+            # Encode a percentage to base a (mouse) progress counter
             wm = bpy.context.window_manager
 
             if self.proxies and self.copies:
-                # If Revolver has to create both proxies and copies,
+                # If Revolver has to encode both proxies and copies,
                 # there are 2x as many levels to be considered
                 inc_level = int(100 / (2 * len(sources)))
             else:
