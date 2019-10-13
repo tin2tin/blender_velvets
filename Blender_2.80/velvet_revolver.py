@@ -597,11 +597,49 @@ class SEQUENCER_OT_proxy_swap(bpy.types.Operator):
         else:
             bpy.ops.sequencer.proxy_editing_tofullres()
 
-        context = bpy.context
-        for area in bpy.context.screen.areas:
-            if area.type == 'SEQUENCE_EDITOR':
-                if area.spaces[0].view_type in {'PREVIEW', 'SEQUENCER_PREVIEW'}:
-                    bpy.ops.sequencer.view_all_preview()
+        scene = bpy.context.scene
+        for s in scene.sequence_editor.sequences_all:
+            if (s.type == "MOVIE"):
+                strip = s
+
+                # hack: update in viewport to read source img orig_width and orig_height
+                # switch view and area
+                oldf = scene.frame_current
+                area = bpy.context.area
+                original_type = area.type
+                area.type = 'SEQUENCE_EDITOR'
+                original_view = area.spaces[0].view_type
+                area.spaces[0].view_type = 'PREVIEW'
+                # NOTE playhead steps alone are sufficient when user has visible VSE Preview
+                frame_initial = scene.frame_current
+                scene.frame_current = strip.frame_start
+                bpy.ops.render.opengl(sequencer=True)
+
+                # gather image data
+                img = strip.elements[0]
+                # store dimensions
+
+                if not (img.orig_width and img.orig_height):
+                    print("pretty_img - Failed to rescale img with width or height of 0: {0}".format(img.filename))
+                    return
+
+                img_res = {
+                    'w': img.orig_width,
+                    'h': img.orig_height
+                }
+                print("%s: %s" % (img.filename, "{0} x {1}".format(img_res['w'], img_res['h'])))
+                bpy.context.scene.render.resolution_x = img_res['w']
+                bpy.context.scene.render.resolution_y = img_res['h']
+
+                bpy.ops.sequencer.view_all_preview() # doesn't work
+
+                # reset view and area
+                area.spaces[0].view_type = original_view
+                area.type = original_type
+                # /hack
+
+                scene.frame_current = oldf
+
         return {'FINISHED'}
 
 
@@ -609,7 +647,6 @@ def headerEntry(self, context):
     layout = self.layout
     st = context.space_data
     if st.view_type in {'PREVIEW', 'SEQUENCER_PREVIEW'}:
-        #layout.separator_spacer()
         layout.operator_menu_enum("sequencer.revolver", "type")
 
 
