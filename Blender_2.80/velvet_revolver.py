@@ -43,6 +43,7 @@ from bpy.props import StringProperty, EnumProperty, IntProperty, FloatProperty, 
 ######## VSE TIMELINE TOGGLE PROXIES <-> FULLRES
 ######## ----------------------------------------------------------------------
 
+
 class Proxy_Editing_ToProxy(bpy.types.Operator):
     """Change filepaths of current strips to proxy files (_proxy.mov)"""
     bl_idname = "sequencer.proxy_editing_toproxy"
@@ -284,7 +285,7 @@ class VideoSource(object):
             elif v_format == "is_mjpeg":
                 self.format = "-probesize 5000000 -c:v mjpeg \
                                -qscale:v 5 -pix_fmt yuvj422p -acodec pcm_s16be"
-            else: # v_format == "is_h264":
+            else:  # v_format == "is_h264":
                 self.format = "-probesize 5000000 -c:v libx264 -pix_fmt yuv420p \
                                -g 1 -sn -crf 25 -preset ultrafast -tune fastdecode -c:a copy"
                 # -preset ultrafast was having problems
@@ -305,7 +306,6 @@ class VideoSource(object):
                                -g 1 -sn -crf 25 -preset ultrafast -tune fastdecode -c:a copy"
                 # -preset ultrafast was having problems
                 # dealing with ProRes422 from Final Cut
-
 
     def runFF(self):
         # Due to spaces, the command entries (ffCommand, input and output) have
@@ -395,11 +395,6 @@ class VelvetRevolver(bpy.types.Operator, ExportHelper):
         description="Allow FFMPEG to overwrite existing files",
         default=False,
     )
-    prop_fps: FloatProperty(
-        name="Fps",
-        description="The FPS from Output Settings is used",
-        default=False,
-    )
 
     def draw(self, context):
 
@@ -440,7 +435,6 @@ class VelvetRevolver(bpy.types.Operator, ExportHelper):
         col.alignment = 'RIGHT'
         col.label(text="Frame Rate  %.2f fps" % fps)
         col.label(text="(Using Output Properties)")
-
 
     @classmethod
     def poll(cls, context):
@@ -534,7 +528,6 @@ class VelvetRevolver(bpy.types.Operator, ExportHelper):
                 # self.report({'ERROR'}, "Some files where not encoded. Look in the System Console for more info.")
             else:
                 self.report({'INFO'}, "Velvet Revolver finished encoding files.")
-
 
         return {'FINISHED'}
 
@@ -642,6 +635,7 @@ class SEQUENCER_OT_proxy_swap(bpy.types.Operator):
                 # /hack
 
                 scene.frame_current = oldf
+                break
 
         return {'FINISHED'}
 
@@ -676,7 +670,7 @@ def register():
 
     # Handle the keymap for Proxy_Editing
     wm = bpy.context.window_manager
-    km = wm.keyconfigs.addon.keymaps.new(name = "Sequencer",space_type='SEQUENCE_EDITOR', region_type='WINDOW')
+    km = wm.keyconfigs.addon.keymaps.new(name = "Sequencer", space_type='SEQUENCE_EDITOR', region_type='WINDOW')
 
     kmi = km.keymap_items.new(Proxy_Editing_ToFullRes.bl_idname, 'P', 'PRESS', shift=True, ctrl=True)
     revolver_keymaps.append((km, kmi))
