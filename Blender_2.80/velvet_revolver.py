@@ -400,7 +400,7 @@ class VelvetRevolver(bpy.types.Operator, ExportHelper):
         description="The FPS from Output Settings is used",
         default=False,
     )
-    
+
     def draw(self, context):
 
         #fps = context.scene.render.fps
@@ -440,7 +440,7 @@ class VelvetRevolver(bpy.types.Operator, ExportHelper):
         col.alignment = 'RIGHT'
         col.label(text="Frame Rate  %.2f fps" % fps)
         col.label(text="(Using Output Properties)")
-        
+
 
     @classmethod
     def poll(cls, context):
